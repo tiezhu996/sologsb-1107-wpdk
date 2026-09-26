@@ -2,6 +2,7 @@ import Dexie, { type Table } from 'dexie'
 import type { FiberBatch } from '../types/fiber-batch'
 import type { Mould } from '../types/mould'
 import type { PaperSample } from '../types/paper-sample'
+import type { RecheckOrder } from '../types/recheck-order'
 import type { SheetRun } from '../types/sheet-run'
 import { calculateDeviation, calculateMeshDensity } from './stripe'
 
@@ -68,6 +69,7 @@ class GbPaperMillDatabase extends Dexie {
   fiberBatches!: Table<FiberBatch, number>
   sheetRuns!: Table<SheetRun, number>
   paperSamples!: Table<PaperSample, number>
+  recheckOrders!: Table<RecheckOrder, number>
 
   constructor() {
     super('gbpapermill-db')
@@ -95,6 +97,9 @@ class GbPaperMillDatabase extends Dexie {
       await transaction.table('paperSamples').toCollection().modify((value: Record<string, unknown>) => {
         value.schemaRev = 2
       })
+    })
+    this.version(3).stores({
+      recheckOrders: '++id,&orderNo,runId,state,grade,openedAt,schemaRev',
     })
     this.on('populate', () => this.seed())
   }
