@@ -5,6 +5,7 @@ import { StatBadge } from '../components/common/StatBadge'
 import { useMouldFilter } from '../hooks/useMouldFilter'
 import { useFiberStore } from '../stores/fiberStore'
 import { useMouldStore } from '../stores/mouldStore'
+import { useRecheckStore } from '../stores/recheckStore'
 import { useRunStore } from '../stores/runStore'
 import { useSampleStore } from '../stores/sampleStore'
 import { isGapOutOfTolerance } from '../utils/stripe'
@@ -47,13 +48,17 @@ export default function Dashboard() {
   const samples = useSampleStore((state) => state.paperSamples)
   const sampleError = useSampleStore((state) => state.error)
   const loadSamples = useSampleStore((state) => state.loadSamples)
+  const orders = useRecheckStore((state) => state.orders)
+  const recheckError = useRecheckStore((state) => state.error)
+  const syncOrders = useRecheckStore((state) => state.syncOrders)
 
   useEffect(() => {
     void loadMoulds()
     void loadBatches()
     void loadRuns()
     void loadSamples()
-  }, [loadBatches, loadMoulds, loadRuns, loadSamples])
+    void syncOrders()
+  }, [loadBatches, loadMoulds, loadRuns, loadSamples, syncOrders])
 
   const { filteredMoulds: activeMoulds } = useMouldFilter(moulds, '', '在用')
   const currentWeekRuns = useMemo(() => runs.filter((run) => isInCurrentWeek(run.runDate)), [runs])
@@ -66,7 +71,9 @@ export default function Dashboard() {
     [runById, samples],
   )
   const activeRate = moulds.length ? Math.round((activeMoulds.length / moulds.length) * 100) : 0
-  const error = mouldError ?? batchError ?? runError ?? sampleError
+  const pendingOrders = useMemo(() => orders.filter((order) => order.status === '待检'), [orders])
+  const failedOrders = useMemo(() => orders.filter((order) => order.status === '未通过'), [orders])
+  const error = mouldError ?? batchError ?? runError ?? sampleError ?? recheckError
 
   return (
     <Stack spacing={3}>
@@ -86,6 +93,8 @@ export default function Dashboard() {
         <StatBadge label="纤维料批" value={batches.length} detail="覆盖四类造纸纤维" tone="bamboo" />
         <StatBadge label="本周工序" value={currentWeekRuns.length} detail="按自然周统计" tone="bamboo" />
         <StatBadge label="待复检样本" value={pendingSamples.length} detail="匀度或帘纹偏差需复核" tone={pendingSamples.length ? 'warning' : 'neutral'} />
+        <StatBadge label="待检工单" value={pendingOrders.length} detail="等待检验员登记复检" tone={pendingOrders.length ? 'warning' : 'neutral'} />
+        <StatBadge label="未通过工单" value={failedOrders.length} detail="纸帘已改记待修补" tone={failedOrders.length ? 'warning' : 'neutral'} />
       </Box>
 
       <Grid container spacing={2.5}>

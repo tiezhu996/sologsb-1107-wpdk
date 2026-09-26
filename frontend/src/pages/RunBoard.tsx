@@ -5,6 +5,7 @@ import { RulerInput } from '../components/common/RulerInput'
 import { useUnitConvert } from '../hooks/useUnitConvert'
 import { useFiberStore } from '../stores/fiberStore'
 import { useMouldStore } from '../stores/mouldStore'
+import { useRecheckStore } from '../stores/recheckStore'
 import { useRunStore } from '../stores/runStore'
 import { DRY_METHODS, STRIPE_DIRECTIONS, type DryMethod, type SheetRunInput, type StripeDirection } from '../types/sheet-run'
 import { calculateDeviation, getGapConclusion, isGapOutOfTolerance } from '../utils/stripe'
@@ -48,6 +49,7 @@ export default function RunBoard() {
   const batches = useFiberStore((state) => state.fiberBatches)
   const batchError = useFiberStore((state) => state.error)
   const loadBatches = useFiberStore((state) => state.loadFiberBatches)
+  const syncOrders = useRecheckStore((state) => state.syncOrders)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<SheetRunInput>(emptyRunForm)
   const [dateFilter, setDateFilter] = useState('')
@@ -97,6 +99,7 @@ export default function RunBoard() {
     if (created) {
       setForm(emptyRunForm)
       setShowForm(false)
+      void syncOrders()
     }
   }
 
@@ -263,7 +266,9 @@ export default function RunBoard() {
                       color={exceeded ? 'warning' : 'primary'}
                       disabled={run.id === undefined || draftGap === run.measuredGap}
                       onClick={() => {
-                        if (run.id !== undefined) void updateMeasuredGap(run.id, draftGap, mould?.stripeGap ?? draftGap)
+                        if (run.id !== undefined) {
+                          void updateMeasuredGap(run.id, draftGap, mould?.stripeGap ?? draftGap).then(() => syncOrders())
+                        }
                       }}
                     >
                       {draftGap === run.measuredGap ? '已记录' : '保存实测'}

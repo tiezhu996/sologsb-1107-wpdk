@@ -5,6 +5,7 @@ import { RulerInput } from '../components/common/RulerInput'
 import { StatBadge } from '../components/common/StatBadge'
 import { useUnitConvert } from '../hooks/useUnitConvert'
 import { useMouldStore } from '../stores/mouldStore'
+import { useRecheckStore } from '../stores/recheckStore'
 import { useRunStore } from '../stores/runStore'
 import { useSampleStore } from '../stores/sampleStore'
 import { EVENNESS_LEVELS, type EvennessLevel, type PaperSampleInput } from '../types/paper-sample'
@@ -36,6 +37,7 @@ export default function SampleCards() {
   const moulds = useMouldStore((state) => state.moulds)
   const mouldError = useMouldStore((state) => state.error)
   const loadMoulds = useMouldStore((state) => state.loadMoulds)
+  const syncOrders = useRecheckStore((state) => state.syncOrders)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<PaperSampleInput>(emptySampleForm)
   const [evennessFilter, setEvennessFilter] = useState<EvennessLevel | '全部'>('全部')
@@ -70,6 +72,7 @@ export default function SampleCards() {
     if (created) {
       setForm(emptySampleForm)
       setShowForm(false)
+      void syncOrders()
     }
   }
 

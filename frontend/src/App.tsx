@@ -9,6 +9,7 @@ const navItems = [
   { label: '纸帘台帐', path: '/moulds' },
   { label: '纤维料批', path: '/fibers' },
   { label: '抄纸工序', path: '/runs' },
+  { label: '复检工单', path: '/recheck' },
   { label: '成纸样本', path: '/samples' },
 ]
 
